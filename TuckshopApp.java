@@ -66,10 +66,42 @@ public class TuckshopApp extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
     }
 
-    // ==================================================================
-    // >>> MEMBER 2: PASTE YOUR TuckshopApp CODE ON THE LINES BELOW THIS BOX <<<
-    // ==================================================================
-    // ----- end of Member 2's code -----
+    private JPanel buildReportPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        String[] columns = {"Receipt No", "Item", "Quantity", "Unit Price", "Total"};
+        salesModel = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
+        };
+        JTable salesTable = new JTable(salesModel);
+
+        revenueLabel = new JLabel("Total revenue: UGX 0");
+        revenueLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
+
+        panel.add(new JScrollPane(salesTable), BorderLayout.CENTER);
+        panel.add(revenueLabel, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private void refreshSalesTable() {
+        salesModel.setRowCount(0);
+        Sale[] list = inventory.getSales();
+        for (int i = 0; i < list.length; i++) {
+            Sale s = list[i];
+            salesModel.addRow(new Object[]{s.getReceiptNo(), s.getProductName(), s.getQuantity(),
+                    s.getUnitPrice(), s.getTotal()});
+        }
+        double average = 0;
+        if (list.length > 0) {
+            average = inventory.getTotalRevenue() / list.length;
+        }
+        revenueLabel.setText("Total revenue: UGX " + String.format("%,.0f", inventory.getTotalRevenue())
+                + "   |   Items sold: " + inventory.getItemsSold()
+                + "   |   Average sale: UGX " + String.format("%,.0f", average));
+    }
 
     // ==================================================================
     // >>> MEMBER 4: PASTE YOUR TuckshopApp CODE ON THE LINES BELOW THIS BOX <<<

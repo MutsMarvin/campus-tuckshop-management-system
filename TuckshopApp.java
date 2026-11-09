@@ -104,9 +104,70 @@ public class TuckshopApp extends JFrame implements ActionListener {
     }
 
     // ==================================================================
-    // >>> MEMBER 4: PASTE YOUR TuckshopApp CODE ON THE LINES BELOW THIS BOX <<<
-    // ==================================================================
-    // ----- end of Member 4's code -----
+        // ==================================================================
+    private JPanel buildSellPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+
+        JPanel form = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        form.add(new JLabel("Product:"));
+        productCombo = new JComboBox<String>();
+        form.add(productCombo);
+        form.add(new JLabel("Quantity:"));
+        sellQtyField = new JTextField(4);
+        form.add(sellQtyField);
+        sellButton = new JButton("Sell");
+        sellButton.addActionListener(this);
+        form.add(sellButton);
+
+        receiptArea = new JTextArea();
+        receiptArea.setEditable(false);
+        receiptArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+        receiptArea.setText("The receipt will appear here after a sale.");
+
+        panel.add(form, BorderLayout.NORTH);
+        panel.add(new JScrollPane(receiptArea), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void handleSell() {
+        int index = productCombo.getSelectedIndex();
+        if (index == -1) {
+            showError("There are no products to sell.");
+            return;
+        }
+        try {
+            Product[] all = inventory.getProducts();
+            Product chosen = all[index];
+            int qty = Integer.parseInt(sellQtyField.getText().trim());
+
+            String error = inventory.validateSale(chosen.getId(), qty);
+            if (error != null) {
+                showError(error);
+                return;
+            }
+            Sale sale = inventory.sellProduct(chosen.getId(), qty);
+            receiptArea.setText(sale.getReceipt());
+            sellQtyField.setText("");
+            refreshAll();
+            updateStatus("Sale completed. Receipt " + sale.getReceiptNo());
+        } catch (NumberFormatException ex) {
+            showError("Quantity must be a whole number.");
+        }
+    }
+
+    private void refreshProductCombo() {
+        int previous = productCombo.getSelectedIndex();
+        productCombo.removeAllItems();
+        Product[] all = inventory.getProducts();
+        for (int i = 0; i < all.length; i++) {
+            productCombo.addItem(all[i].toString());
+        }
+        if (previous >= 0 && previous < all.length) {
+            productCombo.setSelectedIndex(previous);
+        }
+    }
+    
 
     // ==================================================================
     // >>> MEMBER 5: PASTE YOUR TuckshopApp CODE ON THE LINES BELOW THIS BOX <<<

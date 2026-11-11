@@ -168,11 +168,210 @@ public class TuckshopApp extends JFrame implements ActionListener {
         }
     }
     
+    // ==================================================================
+    
+    // ---------- MEMBER 5: Stock tab, buttons, table refresh ----------
 
-    // ==================================================================
-    // >>> MEMBER 5: PASTE YOUR TuckshopApp CODE ON THE LINES BELOW THIS BOX <<<
-    // ==================================================================
-    // ----- end of Member 5's code -----
+    // Extra Stock-tab components (Member 5)
+    private JTextField searchField, categoryField;
+    private JButton searchButton, sortNameButton;
+
+    private JPanel buildStockPanel() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        // --- Top: filter and sort ---
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        top.add(new JLabel("Show:"));
+        filterBox = new JComboBox<String>(new String[]{"All products", "Low stock", "Out of stock"});
+        filterBox.addActionListener(this);
+        top.add(filterBox);
+        sortButton = new JButton("Sort by Price");
+        sortButton.addActionListener(this);
+        top.add(sortButton);
+        sortNameButton = new JButton("Sort by Name");
+        sortNameButton.addActionListener(this);
+        top.add(sortNameButton);
+        top.add(new JLabel("Search:"));
+        searchField = new JTextField(10);
+        top.add(searchField);
+        searchButton = new JButton("Search");
+        searchButton.addActionListener(this);
+        top.add(searchButton);
+
+        // --- Centre: table of products ---
+        String[] columns = {"ID", "Name", "Category", "Price (UGX)", "Quantity", "Status"};
+        stockModel = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int col) {
+                return false;               // user cannot type into the table
+            }
+        };
+        stockTable = new JTable(stockModel);
+        stockTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // --- Bottom: add / restock / remove forms ---
+        JPanel bottom = new JPanel(new GridLayout(2, 1, 4, 4));
+
+        JPanel addRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        addRow.add(new JLabel("Name:"));
+        nameField = new JTextField(12);
+        addRow.add(nameField);
+        addRow.add(new JLabel("Price:"));
+        priceField = new JTextField(6);
+        addRow.add(priceField);
+        addRow.add(new JLabel("Qty:"));
+        qtyField = new JTextField(4);
+        addRow.add(qtyField);
+        addRow.add(new JLabel("Category:"));
+        categoryField = new JTextField(8);
+        addRow.add(categoryField);
+        addButton = new JButton("Add Product");
+        addButton.addActionListener(this);
+        addRow.add(addButton);
+
+        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        actionRow.add(new JLabel("Select a row, then:  Add stock:"));
+        restockField = new JTextField(4);
+        actionRow.add(restockField);
+        restockButton = new JButton("Restock");
+        restockButton.addActionListener(this);
+        actionRow.add(restockButton);
+        removeButton = new JButton("Remove Product");
+        removeButton.addActionListener(this);
+        actionRow.add(removeButton);
+
+        bottom.add(addRow);
+        bottom.add(actionRow);
+
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(new JScrollPane(stockTable), BorderLayout.CENTER);
+        panel.add(bottom, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object source = e.getSource();      // which component was clicked?
+
+        if (source == addButton) {
+            handleAdd();
+        } else if (source == restockButton) {
+            handleRestock();
+        } else if (source == removeButton) {
+            handleRemove();
+        } else if (source == sortButton) {
+            inventory.sortByPrice();
+            refreshAll();
+            updateStatus("Products sorted by price (cheapest first).");
+        } else if (source == sortNameButton) {
+            inventory.sortByName();
+            refreshAll();
+            updateStatus("Products sorted by name (A to Z).");
+        } else if (source == searchButton) {
+            refreshStockTable();
+        } else if (source == filterBox) {
+            refreshStockTable();
+        } else if (source == sellButton) {
+            handleSell();
+        }
+    }
+
+    private void handleAdd() {
+        try {
+            String name = nameField.getText();
+            double price = Double.parseDouble(priceField.getText().trim());
+            int qty = Integer.parseInt(qtyField.getText().trim());
+
+            Product p = inventory.addProduct(name, price, qty);
+            if (p == null) {
+                showError("Enter a name, a price above 0, and a quantity of 0 or more.");
+            } else {
+                p.setCategory(categoryField.getText());
+                nameField.setText("");
+                categoryField.setText("");
+                priceField.setText("");
+                qtyField.setText("");
+                refreshAll();
+                updateStatus("Added: " + p.getName());
+            }
+        } catch (NumberFormatException ex) {
+            showError("Price and quantity must be numbers.");
+        }
+    }
+
+    private void handleRestock() {
+        int row = stockTable.getSelectedRow();
+        if (row == -1) {
+            showError("Please select a product in the table first.");
+            return;
+        }
+        try {
+            int id = (Integer) stockModel.getValueAt(row, 0);
+            int amount = Integer.parseInt(restockField.getText().trim());
+            if (inventory.restock(id, amount)) {
+                restockField.setText("");
+                refreshAll();
+                updateStatus("Stock updated.");
+            } else {
+                showError("Amount must be at least 1.");
+            }
+        } catch (NumberFormatException ex) {
+            showError("Enter a whole number to add.");
+        }
+    }
+
+    private void handleRemove() {
+        int row = stockTable.getSelectedRow();
+        if (row == -1) {
+            showError("Please select a product in the table first.");
+            return;
+        }
+        int id = (Integer) stockModel.getValueAt(row, 0);
+        String name = (String) stockModel.getValueAt(row, 1);
+
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Remove \"" + name + "\" from the shop?", "Confirm", JOptionPane.YES_NO_OPTION);
+        if (choice == JOptionPane.YES_OPTION) {
+            inventory.removeProduct(id);
+            refreshAll();
+            updateStatus("Removed: " + name);
+        }
+    }
+
+    private void refreshAll() {
+        refreshStockTable();
+        refreshProductCombo();
+        refreshSalesTable();
+        updateStatus("Ready.");
+    }
+
+    private void refreshStockTable() {
+        stockModel.setRowCount(0);                          // clear the table
+        String keyword = searchField.getText().trim();
+        Product[] list;
+        if (keyword.isEmpty()) {
+            list = inventory.filterProducts((String) filterBox.getSelectedItem());
+        } else {
+            list = inventory.findByName(keyword);       // Member 3's search method
+        }
+        for (int i = 0; i < list.length; i++) {
+            Product p = list[i];
+            stockModel.addRow(new Object[]{p.getId(), p.getName(), p.getCategory(), p.getPrice(), p.getQuantity(), p.getStatus()});
+        }
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    /** Shows a message in the status bar, followed by a low-stock warning if needed. */
+    private void updateStatus(String message) {
+        int low = inventory.countLowStock();
+        if (low > 0) {
+            message = message + "   |   Warning: " + low + " product(s) low or out of stock.";
+        }
+        statusLabel.setText(message);
+    }
 
     // =====================================================
     //  PROGRAM ENTRY POINT

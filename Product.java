@@ -1,4 +1,4 @@
- / Product represents one item sold in the tuckshop (e.g. "Mineral Water").
+ /** Product represents one item sold in the tuckshop (e.g. "Mineral Water").
  / Attributes are private (encapsulation) and accessed through getters/setters.
  */
 public class Product {

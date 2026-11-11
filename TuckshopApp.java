@@ -170,9 +170,7 @@ public class TuckshopApp extends JFrame implements ActionListener {
     
     // ==================================================================
     
-    // ---------- MEMBER 5: Stock tab, buttons, table refresh ----------
 
-    // Extra Stock-tab components (Member 5)
     private JTextField searchField, categoryField;
     private JButton searchButton, sortNameButton;
 

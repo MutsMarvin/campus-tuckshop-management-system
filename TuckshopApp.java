@@ -1,12 +1,12 @@
 /*
  * CSC 1102: Structured and Object-Oriented Programming - Practical Exam Project
  * Project : Campus Tuckshop Management System
- * Group   : <GROUP NAME / NUMBER>
+ * Group   : <GROUP 9
  * Members : <Mutabarura Marvin - REG NO>
- *           <NAME  - REG NO>
- *           <NAME  - REG NO>
- *           <NAME  - REG NO>
- *           <NAME  - REG NO>
+ *           <WASSWA SIMON SSEMWOGERERE	25/U/03612/PS
+ *           <SSENTONGO JOSHUA	26/U/03646/PSA
+ *           <AKATUKUNDA PERINAH	26/U/03477/PSA
+ *           <SSEBULIBA JOEL NICHOLAS	26/U/31010/PSA
 
  */
 
